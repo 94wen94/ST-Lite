@@ -30,7 +30,7 @@ from ui_tars_utils import (
 )
 
 # Attention mechanism helpers
-from attention_helpers import (
+from attention_replace import (
     replace_qwen2_5_vl,
     replace_opencua,
     set_attention_implementation,
