@@ -1,0 +1,53 @@
+# Core Frameworks
+torch==2.9.0
+torchvision==0.24.0
+torchaudio==2.9.0
+accelerate==1.11.0
+
+# Transformers
+# ⚠️ CRITICAL: Must use official dev version 4.54.0.dev0
+# transformers @ git+https://github.com/huggingface/transformers.git
+
+
+flash-attn==2.8.3
+triton==3.5.0
+xformers==0.0.33
+
+
+openai==2.7.1
+anthropic==0.71.0
+google-genai==1.55.0
+dashscope==1.25.4
+zhipuai==1.0.7
+groq==0.37.1
+
+# Agent & GUI Automation
+playwright==1.57.0
+PyAutoGUI==0.9.54
+pyperclip==1.11.0
+pynput==1.7.8
+
+
+numpy==1.26.3
+pandas==2.2.3
+scipy==1.16.3
+scikit-learn==1.8.0
+
+
+pillow==11.0.0
+paddleocr==3.3.2
+qwen-vl-utils==0.0.14
+opencv-python-headless==4.11.0.86
+easyocr==1.7.2
+
+
+fastapi==0.121.0
+uvicorn==0.38.0
+requests==2.31.0
+httpx==0.28.1
+
+wandb==0.23.1
+rich==14.2.0
+tqdm==4.65.2
+pyyaml==6.0.2
+python-dotenv==1.2.1
