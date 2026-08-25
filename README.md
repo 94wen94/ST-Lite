@@ -1,98 +1,163 @@
+# ST-Lite
 
+> **ST-Lite: Training-Free KV Cache Compression with Spatio-Trajectory Guidance for Long-Horizon GUI Agents**
 
-```markdown
-# AITW Evaluation Script for ST-Lite
+<p align="center">
+  <a href="https://2026.emnlp.org/"><img src="https://img.shields.io/badge/EMNLP-2026-b5179e.svg?style=flat-square" alt="EMNLP 2026" /></a>
+  <a href="https://github.com/94wen94/ST-Lite"><img src="https://img.shields.io/badge/Code-ST--Lite-1f6feb.svg?style=flat-square" alt="Code" /></a>
+  <a href="https://github.com/google-research/google-research/tree/master/android_in_the_wild"><img src="https://img.shields.io/badge/Benchmark-AITW-ff9800.svg?style=flat-square" alt="Android in the Wild" /></a>
+  <img src="https://img.shields.io/badge/Python-3.10+-3776ab.svg?style=flat-square" alt="Python 3.10+" />
+</p>
 
-This repository contains the evaluation script for benchmarking **ST-Lite** (and other UI-TARS variants) on the **Android in the Wild (AITW)** dataset. It supports efficient KV cache compression methods including `st_lite`, `snap_kv`, and `pyramid_kv`.
+**ST-Lite is a training-free KV cache compression method for long-horizon GUI agents.** It combines spatial token importance with cross-frame trajectory redundancy to retain useful visual context while removing repeated information from earlier screenshots.
 
-## 📂 Directory Structure Requirements
+This repository provides the ST-Lite implementation and an evaluation pipeline for [Android in the Wild (AITW)](https://github.com/google-research/google-research/tree/master/android_in_the_wild), with support for UI-TARS- and OpenCUA-style models.
 
-Ensure your project directory contains the following helper modules alongside `eval_aitw.py`:
+## News
+
+- **2026** — ST-Lite at EMNLP 2026.
+- **2026** — Initial code and AITW evaluation pipeline released.
+
+## TL;DR
+
+- **Training-free:** no additional model training or fine-tuning is required.
+- **Spatial guidance:** prioritizes informative regions within the current screenshot.
+- **Trajectory guidance:** detects visually redundant tokens across historical screenshots.
+- **Plug-and-play evaluation:** compares ST-Lite with full cache, PyramidKV, SnapKV, and VL-Cache under the same AITW pipeline.
+- **Multi-budget evaluation:** evaluates several KV cache budgets in one run and writes per-budget metrics.
+
+## How it works
 
 ```text
-.
-├── eval_aitw.py          # Main evaluation script
-├── attention_helpers.py  # Attention masking & KV cache logic
-├── ui_tars_utils.py      # UI-TARS specific utilities
-├── opencua_utils.py      # OpenCUA specific utilities
-└── action_matching.py      # Action matching logic directory
-
+Historical screenshots + current screenshot
+                    │
+                    ├── Spatial importance in the current frame
+                    ├── Cross-frame similarity for trajectory redundancy
+                    └── Recent-token window + attention importance
+                                      │
+                                      ▼
+                           Compressed KV cache
 ```
 
-## 🛠️ Dependencies
+ST-Lite keeps a recent context window, scores older tokens using attention and visual importance, and suppresses highly similar tokens from previous frames. The resulting cache preserves task-relevant spatial and temporal evidence within a configurable budget.
 
-Install the required Python packages. It is recommended to use the `requirements.txt` generated for your specific environment (especially for `transformers` dev versions).
+## Repository structure
+
+```text
+ST-Lite/
+├── eval/
+│   ├── aitw_eval.py          # AITW evaluation entry point
+│   ├── attention_replace.py  # Attention patches and cache configuration
+│   ├── action_matching.py    # AITW action matching
+│   ├── ui_tars_utils.py      # UI-TARS preprocessing and parsing
+│   └── opencua_utils.py      # OpenCUA preprocessing and parsing
+├── utils/
+│   └── methods.py            # ST-Lite and baseline KV-cache methods
+├── requirements.txt
+└── README.md
+```
+
+## Installation
+
+We recommend Linux, an NVIDIA GPU, CUDA, and Python 3.10 or newer.
 
 ```bash
+git clone https://github.com/94wen94/ST-Lite.git
+cd ST-Lite
+
+python -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
-
 ```
 
-## 📊 Data Preparation
+The current implementation relies on the Qwen2.5-VL interfaces from the Transformers development version noted in [`requirements.txt`](./requirements.txt). Install a compatible Transformers build before running evaluation if it is not already present in your environment.
 
-You need the AITW dataset (Google Research) prepared in the following format:
+## Data preparation
 
-1. **Images Directory**: A folder containing all screenshots (referenced in the JSON).
-2. **Test JSON**: A JSON file containing the test episodes, goals, and history.
+Download and prepare the AITW test set with:
 
-## 🚀 Usage
+1. an image directory containing the screenshots referenced by the annotations; and
+2. a test JSON file containing tasks, episodes, goals, actions, and screenshot filenames.
 
-### Basic Evaluation
+The evaluator expects each screenshot at:
 
-Run the evaluation using the following command:
+```text
+<aitw_imgs>/<img_filename>.png
+```
+
+See the official [AITW repository](https://github.com/google-research/google-research/tree/master/android_in_the_wild) for dataset access and annotation details.
+
+## Evaluation
+
+### ST-Lite
 
 ```bash
-python eval_aitw.py \
-    --model_path /path/to/your/UI-TARS-Model \
-    --aitw_imgs /path/to/aitw_images_dir \
-    --aitw_test /path/to/aitw_test.json \
-    --kv_cache st_lite \
-    --kv_cache_budget 20 40 \
-    --results_dir ./results/aitw/
-
+python eval/aitw_eval.py \
+  --model_path /path/to/UI-TARS-1.5-7B \
+  --aitw_imgs /path/to/aitw_images \
+  --aitw_test /path/to/aitw_test.json \
+  --kv_cache st_lite \
+  --kv_cache_budget 20 40 \
+  --his_num 16 \
+  --results_dir ./results/aitw
 ```
 
-### Debugging
+`--kv_cache_budget 20 40` runs two evaluations, retaining the configured percentage of the prompt KV cache for each run.
 
-To test the pipeline with a small number of samples (e.g., first 10 episodes), use the `--debug` flag:
+### Baselines
+
+Use the same command and change `--kv_cache` to one of:
+
+```text
+full_cache | pyramid_kv | snap_kv | vl_cache | st_lite
+```
+
+For a quick pipeline check, limit the number of episodes per task:
 
 ```bash
-python eval_aitw.py ... --debug 10
-
+python eval/aitw_eval.py ... --debug 10
 ```
 
-## ⚙️ Arguments
+## Main arguments
 
-| Argument | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--model_path` | `str` | *Required* | Path to the pretrained model (UI-TARS / Qwen-VL). |
-| `--aitw_imgs` | `str` | *Required* | Directory containing AITW screenshots. |
-| `--aitw_test` | `str` | *Required* | Path to the AITW test set JSON file. |
-| `--kv_cache` | `str` | `st_lite` | KV compression method. Choices: `full_cache`, `st_lite`, `snap_kv`, `pyramid_kv`, `vl_cache`. |
-| `--kv_cache_budget` | `int` | `[40, 80]` | Budget for KV cache compression. |
-| `--window_size` | `int` | `8` | Window size for attention mechanisms. |
-| `--his_num` | `int` | `16` | Number of history steps/images to include in the context. |
-| `--max_new_tokens` | `int` | `128` | Maximum new tokens to generate for the action. |
-| `--device` | `str` | `auto` | Device to run on (`cuda`, `mps`, `cpu`). |
-| `--results_dir` | `str` | `./results/` | Directory to save evaluation metrics and logs. |
+| Argument | Default | Description |
+|---|---:|---|
+| `--model_path` | `/path/to/your/UI-TARS-1.5-7B` | Local path or model identifier. Paths containing `OpenCUA` use the OpenCUA branch; other supported runs use UI-TARS/Qwen2.5-VL. |
+| `--aitw_imgs` | placeholder | Directory containing AITW screenshots. |
+| `--aitw_test` | placeholder | AITW test annotation JSON. |
+| `--his_num` | `16` | Maximum number of historical screenshot-action pairs. |
+| `--kv_cache` | `st_lite` | Cache mode to evaluate. |
+| `--kv_cache_budget` | `40 80` | One or more cache budgets, expressed as percentages. |
+| `--window_size` | `8` | Recent-token attention window. |
+| `--max_new_tokens` | `128` | Maximum generated action tokens. |
+| `--model_dtype` | `bfloat16` | Model dtype: `auto`, `bfloat16`, `float16`, or `float32`. |
+| `--attention_implementation` | `flash_attention_2` | Transformers attention backend. |
+| `--device` | auto-detected | Explicit device override. |
+| `--debug` | disabled | Maximum episodes per task for a smoke test. |
+| `--results_dir` | `./results/aitw/` | Output root directory. |
 
-## 📈 Output
+## Output
 
-Results are saved in the `results_dir` organized by the budget used.
-
-* **`detailed_results.json`**: Contains step-by-step logs, model thoughts, predicted actions, and correctness checks.
-* **`metrics.json`**: Summary of accuracy metrics:
-* **Overall Acc**: Global action matching accuracy.
-* **Task Acc**: Accuracy per task category (e.g., GoogleApps, WebShopping).
-* **Action Type Acc**: Specific accuracy for Click, Scroll, and Type actions.
-
-
-
-## ⚠️ Notes
-
-* **JAX/TPU Warnings**: The script automatically suppresses JAX warnings (`JAX_PLATFORMS=cpu`) used by the action matching library.
-* **Flash Attention**: Ensure your environment supports `flash_attention_2` for optimal performance.
-
+```text
+results/aitw/
+├── budget_20/
+│   ├── detailed_results.json
+│   └── metrics.json
+├── budget_40/
+│   ├── detailed_results.json
+│   └── metrics.json
+└── multi_budget_summary.json
 ```
 
-```
+- `detailed_results.json` stores step-level task, episode, budget, and correctness records.
+- `metrics.json` stores overall and per-task action-matching metrics.
+- `multi_budget_summary.json` compares aggregate metrics across cache budgets.
+
+## Citation
+
+The paper citation and public paper link will be added with the paper release.
+
+## Acknowledgements
+
+This code builds on the AITW evaluation protocol and ideas or implementations from UI-TARS, OpenCUA, PyramidKV, SnapKV, VL-Cache, and AdaKV. We thank the authors of these projects for making their work available.

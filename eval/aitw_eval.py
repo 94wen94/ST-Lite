@@ -40,8 +40,6 @@ from attention_replace import (
     set_last_vision_indices,
     set_vision_start_idx,
     set_vision_end_idx,
-    set_temperature,
-    set_alpha,
     set_window_size,
 )
 
@@ -220,7 +218,12 @@ if __name__ == '__main__':
     print(f"Device: {device}")
     
     # Model Loading
-    model_dtype = {"float32": torch.float32, "bfloat16": torch.bfloat16, "float16": torch.float16}[args.model_dtype]
+    model_dtype = {
+        "auto": "auto",
+        "float32": torch.float32,
+        "bfloat16": torch.bfloat16,
+        "float16": torch.float16,
+    }[args.model_dtype]
     is_opencua = "OpenCUA" in args.model_path
     
     if is_opencua:
@@ -357,8 +360,6 @@ if __name__ == '__main__':
                         elif args.kv_cache in ["st_lite"]:
                             set_vision_start_idx(model, vision_analysis['vision_start_idx'], args)
                             set_vision_end_idx(model, vision_analysis['vision_end_idx'], args)
-                            set_alpha(model, args)
-                            set_temperature(model, args)
 
                     # Generation
                     try:

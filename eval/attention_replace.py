@@ -30,10 +30,12 @@ from transformers.modeling_outputs import BaseModelOutputWithPast
 
 import transformers
 import sys
-sys.path.append('../utils')
+from pathlib import Path
 
-# Importing methods. Aliasing init_gui0_kv to init_st_lite for consistency with new naming scheme.
-from methods import init_pyramidkv, init_vlcache, init_snapkv, init_gui0_kv as init_st_lite
+UTILS_DIR = Path(__file__).resolve().parents[1] / "utils"
+sys.path.insert(0, str(UTILS_DIR))
+
+from methods import init_pyramidkv, init_vlcache, init_snapkv, init_st_lite
 from ui_tars_utils import smart_resize
 
 def apply_multimodal_rotary_pos_emb(q, k, cos, sin, mrope_section, unsqueeze_dim=1):
