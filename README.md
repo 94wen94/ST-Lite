@@ -1,9 +1,9 @@
 # ST-Lite
 
-> **ST-Lite: Training-Free KV Cache Compression with Spatio-Trajectory Guidance for Long-Horizon GUI Agents**
+> **[EMNLP 2026 Findings] ST-Lite: Training-Free KV Cache Compression with Spatio-Trajectory Guidance for Long-Horizon GUI Agents**
 
 <p align="center">
-  <a href="https://2026.emnlp.org/"><img src="https://img.shields.io/badge/EMNLP-2026-b5179e.svg?style=flat-square" alt="EMNLP 2026" /></a>
+  <a href="https://2026.emnlp.org/"><img src="https://img.shields.io/badge/EMNLP%202026-Findings-b5179e.svg?style=flat-square" alt="EMNLP 2026 Findings" /></a>
   <a href="https://github.com/94wen94/ST-Lite"><img src="https://img.shields.io/badge/Code-ST--Lite-1f6feb.svg?style=flat-square" alt="Code" /></a>
   <a href="https://github.com/google-research/google-research/tree/master/android_in_the_wild"><img src="https://img.shields.io/badge/Benchmark-AITW-ff9800.svg?style=flat-square" alt="Android in the Wild" /></a>
   <img src="https://img.shields.io/badge/Python-3.10+-3776ab.svg?style=flat-square" alt="Python 3.10+" />
@@ -15,7 +15,7 @@ This repository provides the ST-Lite implementation and an evaluation pipeline f
 
 ## News
 
-- **2026** — ST-Lite at EMNLP 2026.
+- **2026** — ST-Lite accepted to Findings of EMNLP 2026.
 - **2026** — Initial code and AITW evaluation pipeline released.
 
 ## TL;DR
